@@ -1,46 +1,35 @@
 require(googleVis)
 require(shiny)
-library(stringr)
+require(dplyr)
+load("data/pbg.Rda") 
 
-load("data/data.Rda") 
 
-dat$Inversion<-round(dat$Inversion,2)
-#prepare the data set for the line plots
-g<-factor(unique(dat$Name))
-c<-split(dat,g)
-d <- data.frame(do.call("cbind", c))
-x<-seq(4,length(names(d)),by=5)
-d<-d[,c(3,x)]
-z<-as.character(attributes(c)$names)
-z<-str_trim(z, "right") 
-names(d)<-c("Year",z)
-
-d<-data.frame(d)
-
+names(pbg)
 shinyServer(function(input, output) {
   data<-reactive({
-    a <- subset(dat, Year==input$year)
+    a<-pbg %>% select(Ano, Provincia, PBG.a.precios.de.mercado..aproximados..,Code)
+    a<-pbg %>% filter(Ano==input$year)
     a<-droplevels(a)
     return(a)
   })
   
-  output$gvis <- renderGvis({
-    gvisGeoChart(data(), locationvar="Code", colorvar="Inversion", hovervar="Name", options=list(region="AR", displayMode="region", resolution="provinces", width=600, height=400,  colorAxis="{colors:['#FFFFFF', '#0000FF']}"))  
+  output$mapa <- renderGvis({
+    gvisGeoChart(data(), locationvar="Code", colorvar=input$variable, hovervar="Provincia", options=list(region="AR", displayMode="region", resolution="provinces", width=600, height=400))  
   })
   
   data<-reactive({
-    a <- subset(dat, Year==input$year)
+    a<-pbg %>% filter(Ano==input$year)
     a<-droplevels(a)
     return(a)
   })
   
   output$gvis <- renderGvis({
-    gvisGeoChart(data(), locationvar="Code", colorvar="Inversion", hovervar="Name", options=list(region="AR", displayMode="region", resolution="provinces", width=600, height=400,  colorAxis="{colors:['#FFFFFF', '#0000FF']}"))  
+    gvisGeoChart(data(), locationvar="Code", colorvar=input$variable, hovervar="Provincia", options=list(region="AR", displayMode="region", resolution="provinces", width=600, height=400))  
   })
   
   
   data2<-reactive({
-    a <- subset(dat, Code==input$provincia)
+    a <- subset(pbg, Code==input$provincia)
     a<-droplevels(a)
     return(a)
   })
